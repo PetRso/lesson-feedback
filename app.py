@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import hmac
 import os
 import re
 from pathlib import Path
@@ -28,10 +29,47 @@ try:
 except FileNotFoundError:
     configured_secrets = {}
 for secret_name in (
-    "OPENAI_API_KEY", "OPENAI_MODEL"
+    "APP_PASSWORD", "OPENAI_API_KEY", "OPENAI_MODEL"
 ):
     if configured_secrets.get(secret_name) and not os.getenv(secret_name):
         os.environ[secret_name] = str(configured_secrets[secret_name])
+
+
+def require_password() -> None:
+    """Zastaví aplikáciu, kým používateľ nezadá správne spoločné heslo."""
+    configured_password = os.getenv("APP_PASSWORD", "").strip()
+    if not configured_password:
+        st.title("Prihlásenie", anchor=False)
+        st.error(
+            "Prístupové heslo nie je nastavené. Pridajte APP_PASSWORD do Streamlit Secrets.",
+            icon=":material/lock:",
+        )
+        st.stop()
+
+    if st.session_state.get("authenticated") is True:
+        return
+
+    st.title("Prihlásenie", anchor=False)
+    st.caption("Pre pokračovanie zadajte prístupové heslo.")
+    with st.form("password_form", clear_on_submit=False):
+        entered_password = st.text_input("Heslo", type="password", key="password_input")
+        submitted = st.form_submit_button("Vstúpiť", type="primary", width="stretch")
+
+    if submitted:
+        if hmac.compare_digest(entered_password.encode("utf-8"), configured_password.encode("utf-8")):
+            st.session_state.authenticated = True
+            st.session_state.pop("password_input", None)
+            st.rerun()
+        else:
+            st.error("Nesprávne heslo.", icon=":material/error:")
+    st.stop()
+
+
+def logout() -> None:
+    """Odhlási používateľa a odstráni obsah pracovnej relácie."""
+    for key in list(st.session_state):
+        del st.session_state[key]
+    st.rerun()
 
 
 @st.cache_data
@@ -104,7 +142,7 @@ def render_feedback(evaluation: dict) -> None:
     st.badge(evaluation["verdict"], color=verdict_color(evaluation["verdict"]), icon=":material/fact_check:")
     st.markdown(evaluation["rationale"])
 
-    st.subheader("Zvýraznené zistenia")
+    st.subheader("Zistenia a odporúčané úpravy")
     if not evaluation["highlights"]:
         st.caption("V texte sa nenašli úseky, ktoré by bolo možné spoľahlivo priradiť k úrovni.")
     for item in evaluation["highlights"]:
@@ -114,6 +152,20 @@ def render_feedback(evaluation: dict) -> None:
             st.markdown(f'**Prečo:** {item["reason"]}')
             if item["suggestion"]:
                 st.markdown(f'**Ako upraviť:** {item["suggestion"]}')
+
+    groups = (
+        ("1. Nevyhnutné na odstránenie nesúladu", evaluation["required_changes"]),
+        ("2. Dôležité na lepšie naplnenie kurikula", evaluation["important_changes"]),
+        ("3. Voliteľné metodické zlepšenia", evaluation["optional_changes"]),
+    )
+    st.markdown("**Priorita úprav**")
+    for heading, items in groups:
+        st.markdown(f"**{heading}**")
+        if items:
+            for item in items:
+                st.markdown(f"- {item}")
+        else:
+            st.caption("Bez zistení v tejto kategórii.")
 
     st.subheader("Časti v súlade")
     if evaluation["strengths"]:
@@ -135,30 +187,15 @@ def render_feedback(evaluation: dict) -> None:
     else:
         st.caption("Úrovne rubriky sa nepodarilo určiť.")
 
-    st.subheader("Odporúčané úpravy")
-    groups = (
-        ("1. Nevyhnutné na odstránenie nesúladu", evaluation["required_changes"]),
-        ("2. Dôležité na lepšie naplnenie kurikula", evaluation["important_changes"]),
-        ("3. Voliteľné metodické zlepšenia", evaluation["optional_changes"]),
-    )
-    for heading, items in groups:
-        st.markdown(f"**{heading}**")
-        if items:
-            for item in items:
-                st.markdown(f"- {item}")
-        else:
-            st.caption("Bez zistení v tejto kategórii.")
-
-    st.subheader("Záver pre učiteľa")
-    st.markdown(f'**Čo určite zachovať:** {evaluation["keep"]}')
-    st.markdown(f'**Čo treba upraviť:** {evaluation["must_change"]}')
-    st.markdown(f'**Najdôležitejší ďalší krok:** {evaluation["next_step"]}')
-
-
+require_password()
 init_state()
 svp_rules, rubric, consultation_system_prompt = load_evaluation_sources()
 
-st.title("Hodnotenie prípravy na vyučovaciu hodinu", anchor=False)
+title_column, logout_column = st.columns([6, 1], vertical_alignment="center")
+with title_column:
+    st.title("Hodnotenie prípravy na vyučovaciu hodinu", anchor=False)
+with logout_column:
+    st.button("Odhlásiť sa", on_click=logout, icon=":material/logout:", width="stretch")
 st.caption("Spätná väzba podľa slovenského Štátneho vzdelávacieho programu a projektovej rubriky")
 if has_ai_credentials():
     st.badge("AI hodnotenie je pripojené (gpt-4.1-mini)", color="green", icon=":material/online_prediction:")

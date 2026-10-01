@@ -127,9 +127,6 @@ def _normalise_evaluation(data: dict[str, Any]) -> dict[str, Any]:
         "required_changes": [str(item) for item in data.get("required_changes", [])],
         "important_changes": [str(item) for item in data.get("important_changes", [])],
         "optional_changes": [str(item) for item in data.get("optional_changes", [])],
-        "keep": str(data.get("keep", "")),
-        "must_change": str(data.get("must_change", "")),
-        "next_step": str(data.get("next_step", "")),
     }
 
 
@@ -159,10 +156,7 @@ Vráť IBA platný JSON bez markdownového bloku v tejto schéme:
   ],
   "required_changes":["nevyhnutné úpravy"],
   "important_changes":["dôležité úpravy"],
-  "optional_changes":["voliteľné zlepšenia"],
-  "keep":"čo zachovať",
-  "must_change":"čo musí učiteľ upraviť",
-  "next_step":"najdôležitejší ďalší krok"
+  "optional_changes":["voliteľné zlepšenia"]
 }
 Každá položka highlights musí obsahovať presnú súvislú citáciu zo vstupného plánu. Nevymýšľaj text, ktorý v pláne nie je.
 V rubric_scores ohodnoť presne všetkých šesť kritérií z rubriky úrovňou 1 až 4 a názvy prelož do slovenčiny.
@@ -284,9 +278,6 @@ def local_evaluation(plan: str) -> dict[str, Any]:
             "required_changes": required,
             "important_changes": important,
             "optional_changes": ["Zvážiť primeraný priestor na reflexiu stratégie učenia alebo sebahodnotenie."],
-            "keep": "Zachovať konkrétne formulácie, ktoré opisujú učenie a činnosť žiaka.",
-            "must_change": required[0] if required else "Doplniť iba tie chýbajúce informácie, ktoré sú potrebné na overenie deklarovaného cieľa.",
-            "next_step": important[0] if important else "Skontrolovať zrozumiteľnosť kritérií úspechu pre žiakov.",
         }
     )
 
