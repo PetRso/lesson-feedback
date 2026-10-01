@@ -1,0 +1,50 @@
+:root {
+  --navy: #1e3a8a;
+  --ink: #0f172a;
+  --line: #e2e8f0;
+}
+
+.stApp { background: #f8fafc; color: var(--ink); }
+.block-container { max-width: 1500px; padding-top: 1.2rem; padding-bottom: 4rem; }
+[data-testid="stSidebar"], [data-testid="collapsedControl"] { display: none; }
+h1, h2, h3 { letter-spacing: -0.025em; }
+[data-testid="stChatMessage"] {
+  border: 1px solid var(--line);
+  border-radius: .8rem;
+  background: white;
+}
+[data-testid="stChatMessage"] p { line-height: 1.6; }
+.stButton > button { border-radius: .6rem; font-weight: 650; }
+.stTextArea textarea { border-radius: .55rem; line-height: 1.58; }
+
+.annotated-plan {
+  min-height: 610px;
+  max-height: 610px;
+  overflow-y: auto;
+  white-space: normal;
+  padding: 1.1rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: .65rem;
+  background: #fff;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .9rem;
+  line-height: 1.7;
+}
+.annotated-plan mark {
+  padding: .08rem .15rem;
+  border-radius: .2rem;
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  cursor: help;
+}
+.mark-nesulad { background: #fecaca; border-bottom: 2px solid #dc2626; }
+.mark-nepreukazane { background: #fed7aa; border-bottom: 2px solid #ea580c; }
+.mark-odporucanie { background: #fef08a; border-bottom: 2px solid #ca8a04; }
+.mark-sulad { background: #bbf7d0; border-bottom: 2px solid #16a34a; }
+
+@media (max-width: 800px) {
+  .block-container { padding-left: .8rem; padding-right: .8rem; }
+  .annotated-plan { min-height: 420px; max-height: 420px; }
+}
